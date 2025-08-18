@@ -1,0 +1,242 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    /* Performance optimizations */
+    will-change: scroll-position;
+    scroll-behavior: smooth;
+  }
+  
+  :root {
+    /* Light theme variables */
+    --chat-bg: #ffffff;
+    --sidebar-bg: #f8f9fa;
+    --message-bg: #f1f3f4;
+    --user-message-bg: #e3f2fd;
+    --text-primary: #1a1a1a;
+    --text-secondary: #5f6368;
+    --border-color: #dadce0;
+  }
+  
+  .dark {
+    /* Dark theme variables */
+    --chat-bg: #343541;
+    --sidebar-bg: #202123;
+    --message-bg: #444654;
+    --user-message-bg: #343541;
+    --text-primary: #ECECF1;
+    --text-secondary: #8E8EA0;
+    --border-color: #565869;
+  }
+  
+  body {
+    @apply bg-chat-bg text-text-primary;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+@layer components {
+  .chat-container {
+    @apply flex h-screen bg-chat-bg;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+  }
+  
+  .sidebar {
+    @apply w-64 bg-sidebar-bg border-r border-border-color;
+    /* Performance optimizations */
+    will-change: transform;
+    transform: translateZ(0);
+  }
+  
+  .chat-area {
+    @apply flex-1 flex flex-col;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+  }
+  
+  .message {
+    @apply py-6 px-4 border-b border-border-color;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+  }
+  
+  .user-message {
+    @apply bg-user-message-bg;
+  }
+  
+  .assistant-message {
+    @apply bg-message-bg;
+  }
+  
+  .input-container {
+    @apply p-4;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+  }
+  
+  .chat-input {
+    @apply w-full max-w-4xl mx-auto bg-message-bg border border-border-color rounded-xl px-4 py-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-green-500;
+    /* Performance optimizations */
+    will-change: auto;
+    transform: translateZ(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  
+  .chat-input::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .chat-input:focus::before {
+    opacity: 1;
+  }
+  
+  .chat-input:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.15);
+  }
+  
+  .chat-input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.25);
+  }
+  
+  /* Performance optimized animations */
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  .animate-bounce {
+    animation: bounce 1s infinite;
+  }
+  
+  /* Smooth transitions */
+  * {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+  
+  /* Optimize scrolling */
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+  }
+  
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+  }
+  
+  /* Modern Logo Styles */
+  .message .w-10.h-10 {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .message .w-10.h-10:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  /* Dark theme logo adjustments */
+  .dark .message .w-10.h-10 {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+  
+  .dark .message .w-10.h-10:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Example Question Cards - TAAI Logo Style */
+  .example-card {
+    @apply relative p-4 border border-border-color rounded-xl transition-all duration-300 cursor-pointer;
+    background: linear-gradient(135deg, var(--message-bg) 0%, var(--sidebar-bg) 100%);
+  }
+  
+  .example-card:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .example-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .example-card:hover::before {
+    opacity: 1;
+  }
+  
+  .example-card-icon {
+    @apply text-2xl mb-3 transition-transform duration-300;
+  }
+  
+  .example-card:hover .example-card-icon {
+    transform: scale(1.1) rotate(5deg);
+  }
+  
+  .example-card-title {
+    @apply text-text-primary font-semibold mb-2 transition-colors duration-300;
+  }
+  
+  .example-card:hover .example-card-title {
+    @apply text-green-600;
+  }
+  
+  .example-card-description {
+    @apply text-sm text-text-secondary transition-colors duration-300;
+  }
+  
+  .example-card:hover .example-card-description {
+    @apply text-text-primary;
+  }
+  
+  /* Dark theme adjustments */
+  .dark .example-card {
+    background: linear-gradient(135deg, var(--message-bg) 0%, var(--sidebar-bg) 100%);
+  }
+  
+  .dark .example-card:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+}

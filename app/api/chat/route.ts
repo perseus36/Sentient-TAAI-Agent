@@ -1,0 +1,121 @@
+import { NextRequest, NextResponse } from 'next/server'
+import OpenAI from 'openai'
+
+// Get API key from environment variable
+const apiKey = process.env.OPENAI_API_KEY
+
+if (!apiKey) {
+  throw new Error('OPENAI_API_KEY environment variable is not set. Please create a .env file with your OpenAI API key.')
+}
+
+const openai = new OpenAI({
+  apiKey: apiKey,
+})
+
+// Simple in-memory cache for responses
+const responseCache = new Map()
+
+export async function POST(request: NextRequest) {
+  try {
+    const { message, history } = await request.json()
+
+    // Create cache key from message and recent history
+    const cacheKey = `${message}-${JSON.stringify(history.slice(-3))}`
+    
+    // Check cache first
+    if (responseCache.has(cacheKey)) {
+      const cachedResponse = responseCache.get(cacheKey)
+      // Cache expires after 1 hour
+      if (Date.now() - cachedResponse.timestamp < 3600000) {
+        return NextResponse.json({ response: cachedResponse.response })
+      }
+    }
+
+    // Check if the message is about a specific cryptocurrency
+    const cryptoKeywords = ['BTC', 'ETH', 'SOL', 'DOGE', 'ADA', 'DOT', 'LINK', 'UNI', 'MATIC', 'AVAX', 'XRP', 'LTC', 'BCH', 'ETC', 'XLM', 'VET', 'TRX', 'FIL', 'ATOM', 'NEAR', 'bitcoin', 'ethereum', 'solana', 'dogecoin', 'cardano', 'polkadot', 'chainlink', 'uniswap', 'matic', 'avalanche', 'ripple', 'litecoin', 'bitcoin cash', 'ethereum classic', 'stellar', 'vechain', 'tron', 'filecoin', 'cosmos', 'near']
+    
+    const isCryptoQuestion = cryptoKeywords.some(keyword => 
+      message.toLowerCase().includes(keyword.toLowerCase())
+    )
+
+    // Technical analysis system message - optimized for speed
+    const systemMessage = {
+      role: 'system' as const,
+      content: `You are TAAI Agent (Technical Analysis AI Agent), an expert financial advisor specializing in technical analysis. 
+
+RESPONSE RULES:
+1. Provide information only on technical analysis topics
+2. Do not give investment advice, only provide educational information
+3. Detect the language of the user's question and respond in the same language
+4. Provide detailed explanations on technical indicators, chart patterns, trend analysis, etc.
+5. Include risk management warnings
+6. Explain complex topics in simple and understandable terms
+7. Provide examples and practical information
+8. Always add the disclaimer "This is not investment advice"
+9. Keep responses concise but informative (max 2-3 paragraphs)
+10. Use bullet points for key concepts when appropriate
+
+Respond to the user's question within this framework in the same language they used.`
+    }
+
+    // Prepare chat history - limit to last 5 messages for faster processing
+    const limitedHistory = history.slice(-5)
+    const messages = [
+      systemMessage,
+      ...limitedHistory.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      { role: 'user', content: message }
+    ]
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo', // Faster model for better response time
+      messages: messages,
+      max_tokens: 600, // Reduced for faster responses
+      temperature: 0.5, // Lower temperature for more focused responses
+      presence_penalty: 0.1, // Reduce repetition
+      frequency_penalty: 0.1, // Reduce repetition
+    })
+
+    const openaiResponse = completion.choices[0]?.message?.content || 'Sorry, could not generate a response.'
+
+    // If it's a crypto question, add the special message
+    let finalResponse = openaiResponse
+    
+    if (isCryptoQuestion) {
+      // Detect language and provide appropriate message
+      const isTurkish = /[çğıöşüÇĞIÖŞÜ]/.test(message) || 
+                       message.toLowerCase().includes('nasıl') || 
+                       message.toLowerCase().includes('nedir') ||
+                       message.toLowerCase().includes('hakkında')
+      
+      const specialMessage = isTurkish 
+        ? `Merhaba ben TAAI Agent! Şuan gelişim aşamasındayım ve henüz spesifik token analizleri yapamıyorum. Bunun için şimdilik sizlere istediğiniz tokenin genel teknik analizinizi yapabileceğiniz bilgileri paylaşacağım. Bunları kullanarak gerçek zamanlı grafik üzerinde analiz yapabilirsiniz.\n\n`
+        : `Hello, I'm TAAI Agent! I'm currently in development and cannot yet perform specific token analysis. For now, I'll share information with you that you can use to perform general technical analysis of your desired token. You can use these to analyze on real-time charts.\n\n`
+      
+      finalResponse = specialMessage + openaiResponse
+    }
+
+    // Cache the response
+    responseCache.set(cacheKey, {
+      response: finalResponse,
+      timestamp: Date.now()
+    })
+
+    // Clean up old cache entries (keep only last 100)
+    if (responseCache.size > 100) {
+      const entries = Array.from(responseCache.entries())
+      entries.sort((a, b) => b[1].timestamp - a[1].timestamp)
+      entries.slice(100).forEach(([key]) => responseCache.delete(key))
+    }
+
+    return NextResponse.json({ response: finalResponse })
+  } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json(
+      { error: 'An error occurred' },
+      { status: 500 }
+    )
+  }
+}
