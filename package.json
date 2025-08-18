@@ -1,7 +1,7 @@
 {
   "name": "technical-analysis-ai-agent",
   "version": "1.0.0",
-  "description": "AI Agent for Technical Analysis Questions",
+  "description": "TAAI Agent - Technical Analysis AI Assistant designed for future Sentient Chat API integration",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
@@ -33,7 +33,10 @@
     "ai",
     "technical-analysis",
     "trading",
-    "chatbot"
+    "chatbot",
+    "sentient",
+    "sentient-chat",
+    "nextjs"
   ],
   "author": "Your Name",
   "license": "MIT"
