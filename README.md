@@ -2,6 +2,8 @@
 
 A modern, AI-powered technical analysis assistant built with Next.js 14, designed specifically for future integration with Sentient Chat API. TAAI Agent provides expert guidance on technical analysis topics through an intuitive chat interface and serves as a foundation for building intelligent trading applications that will seamlessly connect to Sentient's advanced AI capabilities.
 
+<!-- Updated by perseus36 -->
+
 ## ✨ Features
 
 - 🤖 **AI-Powered Responses**: OpenAI GPT-3.5 Turbo integration for intelligent technical analysis guidance (temporary, will be replaced with Sentient Chat API)
