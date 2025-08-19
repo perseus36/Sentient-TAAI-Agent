@@ -121,18 +121,7 @@
     box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.25);
   }
   
-  /* Performance optimized animations */
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  .animate-spin {
-    animation: spin 1s linear infinite;
-  }
-  
-  .animate-bounce {
-    animation: bounce 1s infinite;
-  }
+  /* Performance optimized animations - removed loading animations */
   
   /* Smooth transitions */
   * {
@@ -170,6 +159,17 @@
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
   
+  /* Sidebar Logo Styles */
+  .sidebar .w-10.h-10 {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  
+  .sidebar .w-10.h-10:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.3);
+  }
+  
   /* Dark theme logo adjustments */
   .dark .message .w-10.h-10 {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
@@ -177,6 +177,10 @@
   
   .dark .message .w-10.h-10:hover {
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .sidebar .w-10.h-10:hover {
+    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4);
   }
   
   /* Example Question Cards - TAAI Logo Style */

@@ -84,7 +84,11 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
     
     // Clear current messages and reload
     localStorage.removeItem('chat-messages')
-    window.location.reload()
+    
+    // Notify parent component instead of reloading
+    if (onChatSelect) {
+      onChatSelect(newSession.id)
+    }
   }
 
   // Switch to a specific chat session
@@ -146,8 +150,12 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
       <div className="p-4">
                  {/* Logo */}
          <div className="flex justify-center mb-6">
-           <div className="relative group">
-             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg flex items-center justify-center flex-shrink-0">
+           <div 
+             className="relative group cursor-pointer"
+             onClick={startNewChat}
+             title="Click to start new chat"
+           >
+             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg flex items-center justify-center flex-shrink-0 hover:scale-105 transition-transform duration-200">
                <span className="text-white font-mono text-sm font-extrabold tracking-widest px-2 py-1 bg-gray-800 rounded-md">TAAI</span>
              </div>
              <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-green-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>

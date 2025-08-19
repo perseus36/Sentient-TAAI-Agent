@@ -21,8 +21,8 @@ export default function Home() {
   // Handle chat session selection from sidebar
   const handleChatSelect = (sessionId: string) => {
     setCurrentSessionId(sessionId)
-    // Reload the page to switch to the selected chat
-    window.location.reload()
+    // Update current session ID in localStorage
+    localStorage.setItem('current-session-id', sessionId)
   }
 
   return (

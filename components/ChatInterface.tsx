@@ -25,6 +25,14 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
   const [inputValue, setInputValue] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
+  // Initialize with welcome message immediately to avoid loading screen
+  const [initialMessage] = useState<ChatMessage>({
+    id: '1',
+    role: 'assistant',
+    content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
+    timestamp: new Date()
+  })
+
   // Thinking messages for better UX
   const thinkingMessages = [
     "Analyzing technical indicators...",
@@ -63,15 +71,10 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
     localStorage.setItem('current-session-id', newSession.id)
     
     // Show welcome screen
-    setMessages([{
-      id: '1',
-      role: 'assistant',
-      content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
-      timestamp: new Date()
-    }])
+    setMessages([initialMessage])
     
-    // Clear old messages
-    localStorage.removeItem('chat-messages')
+    // Clear old messages for the new session
+    localStorage.removeItem(`chat-messages-${newSession.id}`)
     
     // Notify parent component
     if (onChatSelect) {
@@ -88,34 +91,23 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
         setMessages(parsedMessages)
       } else {
         // If no saved messages, show welcome message
-        setMessages([{
-          id: '1',
-          role: 'assistant',
-          content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
-          timestamp: new Date()
-        }])
+        setMessages([initialMessage])
       }
     } catch (e) {
       console.error('Error loading chat session:', e)
       // Fallback to welcome message
-      setMessages([{
-        id: '1',
-        role: 'assistant',
-        content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
-        timestamp: new Date()
-      }])
+      setMessages([initialMessage])
     }
   }
 
   // Update timestamps after component mounts
   useEffect(() => {
     setMounted(true)
-  }, [])
-
-  // Initialize messages and chat session
-  useEffect(() => {
-    if (typeof window !== 'undefined' && mounted && !initialized) {
-      // Check current chat session
+    // Set initial messages immediately
+    setMessages([initialMessage])
+    
+    // Initialize chat session immediately if possible
+    if (typeof window !== 'undefined') {
       const currentSession = localStorage.getItem('current-session-id')
       if (!currentSession) {
         // Create new session if first time opening
@@ -127,27 +119,20 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
         }
         localStorage.setItem('current-session-id', newSession.id)
         localStorage.setItem('chat-sessions', JSON.stringify([newSession]))
-        
-        // Show welcome screen
-        setMessages([{
-          id: '1',
-          role: 'assistant',
-          content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
-          timestamp: new Date()
-        }])
       } else {
         // Load existing chat session
         loadChatSession(currentSession)
       }
-      
       setInitialized(true)
     }
-  }, [mounted, initialized])
+  }, [initialMessage])
 
   // Handle chat session switching
   useEffect(() => {
     if (currentSessionId && mounted) {
       loadChatSession(currentSessionId)
+      // Also update the current session ID in localStorage
+      localStorage.setItem('current-session-id', currentSessionId)
     }
   }, [currentSessionId, mounted])
 
@@ -371,16 +356,10 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <Loader2 className="w-4 h-4 text-green-500 animate-spin" />
                       <span className="text-sm text-text-secondary font-medium">TAAI Agent is thinking...</span>
                     </div>
                     <div className="text-sm text-text-secondary italic">
                       {thinkingMessage}
-                    </div>
-                    <div className="flex space-x-2 mt-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                     </div>
                   </div>
                 </div>
