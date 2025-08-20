@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ThemeContext'
+import { UsernameProvider } from '@/components/UsernameContext'
 import { Suspense } from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -25,9 +26,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <Suspense fallback={null}>
-            {children}
-          </Suspense>
+          <UsernameProvider>
+            <Suspense fallback={null}>
+              {children}
+            </Suspense>
+          </UsernameProvider>
         </ThemeProvider>
       </body>
     </html>

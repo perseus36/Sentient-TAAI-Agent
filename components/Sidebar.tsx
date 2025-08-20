@@ -3,6 +3,7 @@
 import { Plus, MessageSquare, Settings, Sun, Moon, Clock, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTheme } from './ThemeContext'
+import { useUsername } from './UsernameContext'
 
 interface ChatSession {
   id: string
@@ -23,6 +24,7 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
   const [mounted, setMounted] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([])
+  const { username, setUsername, saveUsername } = useUsername()
   const { theme, toggleTheme } = useTheme()
 
   // Update timestamps after component mounts
@@ -67,6 +69,10 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
       console.error('Error loading chat sessions:', e)
     }
   }
+
+
+
+
 
   // Start new chat
   const startNewChat = () => {
@@ -162,13 +168,13 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
            </div>
          </div>
         
-                 <button
-           onClick={startNewChat}
-           className="w-full flex items-center justify-center p-3 border border-border-color rounded-lg hover:bg-message-bg transition-colors text-text-primary mb-8"
-         >
-           <Plus className="w-4 h-4 mr-2" />
-           New Chat
-         </button>
+                         <button
+          onClick={startNewChat}
+          className="w-full flex items-center justify-center p-3 border border-border-color rounded-lg hover:bg-message-bg transition-colors text-text-primary mb-8 font-medium"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Chat
+        </button>
 
          {/* Divider */}
          <div className="border-t border-border-color mb-6"></div>
@@ -216,18 +222,35 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, currentSession
         {/* Additional content can go here */}
       </div>
       
-      <div className="p-4 border-t border-border-color mt-auto">
+      <div className="p-4 mt-auto" style={{ paddingTop: 'calc(1rem + 5px)' }}>
         <div className="relative">
           <button 
             onClick={() => setShowSettings(!showSettings)}
-            className="w-full flex items-center p-3 rounded-lg hover:bg-message-bg transition-colors text-text-primary"
+            className="w-full flex items-center justify-center p-3 border border-border-color rounded-lg hover:bg-message-bg transition-colors text-text-primary font-medium"
           >
-            <Settings className="w-4 h-4 mr-3" />
-            <span>Settings</span>
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
           </button>
           
           {showSettings && (
             <div className="absolute bottom-full left-0 right-0 mb-2 bg-sidebar-bg border border-border-color rounded-lg p-3 shadow-lg">
+              {/* Username Input */}
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Username
+                </label>
+                                                                                                                                                                                                                                                                               <div>
+                                                                                     <input
+                          type="text"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          placeholder="Enter username"
+                          className="w-full px-3 py-2 text-sm bg-message-bg border border-border-color rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                    </div>
+              </div>
+              
+              {/* Theme Toggle */}
               <div className="flex items-center justify-between p-2 rounded-lg hover:bg-message-bg transition-colors cursor-pointer"
                    onClick={toggleTheme}>
                 <div className="flex items-center">

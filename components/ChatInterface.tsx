@@ -23,13 +23,20 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
   const [isLoading, setIsLoading] = useState(false)
   const [thinkingMessage, setThinkingMessage] = useState('')
   const [inputValue, setInputValue] = useState('')
+  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'sentient'>('openai')
+  
+  // Force OpenAI as the only available provider for now
+  useEffect(() => {
+    setSelectedProvider('openai')
+  }, [])
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   // Initialize with welcome message immediately to avoid loading screen
   const [initialMessage] = useState<ChatMessage>({
     id: '1',
     role: 'assistant',
-    content: 'Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?',
+    content: '',
     timestamp: new Date()
   })
 
@@ -137,11 +144,27 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
   }, [currentSessionId, mounted])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+    }
+  }
+
+  const scrollToBottomIfNearBottom = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current
+      const isNearBottom = scrollTop + clientHeight >= scrollHeight - 100 // 100px tolerance
+      
+      if (isNearBottom) {
+        messagesContainerRef.current.scrollTop = scrollHeight
+      }
+    }
   }
 
   useEffect(() => {
-    scrollToBottom()
+    // Only auto-scroll if it's a new message (not initial load)
+    if (messages.length > 1) {
+      scrollToBottomIfNearBottom()
+    }
   }, [messages, isLoading])
 
   // Animated thinking message
@@ -237,7 +260,8 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
     }
 
     try {
-      const response = await fetch('/api/chat', {
+      const endpoint = selectedProvider === 'openai' ? '/api/chat' : '/api/sentient'
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -278,122 +302,196 @@ export default function ChatInterface({ onChatSelect, currentSessionId }: ChatIn
   }
 
   return (
-    <div className="chat-area">
-      <div className="flex-1 overflow-y-auto">
+    <div className="chat-area flex flex-col h-full">
+      {/* Messages Container - Only scrollable when there are messages */}
+      <div 
+        ref={messagesContainerRef} 
+        className={`flex-1 px-4 py-4 ${
+          messages.length > 1 ? 'overflow-y-auto has-messages' : 'overflow-visible'
+        }`}
+      >
         {messages.length === 1 && !isLoading ? (
-          // Welcome screen
-          <div className="flex flex-col items-center justify-center h-full px-4">
-            <div className="text-center max-w-2xl">
-              <h1 className="text-3xl font-bold text-text-primary mb-2">
-                TAAI Agent
-              </h1>
-              <p className="text-base text-text-secondary mb-4">
-                (Technical Analysis AI Agent)
-              </p>
-              <p className="text-lg text-text-secondary mb-8 leading-relaxed">
-                Hello! I am TAAI Agent, here to help you with technical analysis. 
-                What topic would you like to learn about?
-              </p>
-              
-                             {/* Example questions */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                 <button
-                   onClick={() => setInputValue("How is the RSI indicator used?")}
-                   className="example-card"
-                 >
-                   <div className="example-card-icon">📊</div>
-                   <div className="example-card-title">RSI Indicator</div>
-                   <div className="example-card-description">How to determine overbought/oversold levels?</div>
-                 </button>
-                 
-                 <button
-                   onClick={() => setInputValue("What are Fibonacci levels?")}
-                   className="example-card"
-                 >
-                   <div className="example-card-icon">📈</div>
-                   <div className="example-card-title">Fibonacci</div>
-                   <div className="example-card-description">How are retracement levels calculated?</div>
-                 </button>
-                 
-                 <button
-                   onClick={() => setInputValue("How is trend analysis performed?")}
-                   className="example-card"
-                 >
-                   <div className="example-card-icon">🎯</div>
-                   <div className="example-card-title">Trend Analysis</div>
-                   <div className="example-card-description">How do we identify uptrends and downtrends?</div>
-                 </button>
-                 
-                 <button
-                   onClick={() => setInputValue("Tell me about the MACD indicator")}
-                   className="example-card"
-                 >
-                   <div className="example-card-icon">⚡</div>
-                   <div className="example-card-title">MACD</div>
-                   <div className="example-card-description">How do we read momentum and trend changes?</div>
-                 </button>
-               </div>
-              
-              <div className="text-xs text-text-secondary">
-                💡 Click on example questions to get started immediately or write your own question
-              </div>
-            </div>
-          </div>
+          // Empty welcome screen - no content
+          <div></div>
         ) : (
           // Normal chat screen
           <>
-            {messages.map((message) => (
-              <Message key={message.id} message={message} />
-            ))}
-            {isLoading && (
-              <div className="message assistant-message">
-                <div className="max-w-4xl mx-auto flex items-start space-x-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg flex items-center justify-center flex-shrink-0">
-                    <div className="relative group">
-                      <span className="text-white font-mono text-sm font-extrabold tracking-widest px-2 py-1 bg-gray-800 rounded-md">TAAI</span>
-                      <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-green-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span className="text-sm text-text-secondary font-medium">TAAI Agent is thinking...</span>
-                    </div>
-                    <div className="text-sm text-text-secondary italic">
-                      {thinkingMessage}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {messages
+              .filter(message => message.content.trim())
+              .map((message) => (
+                <Message key={message.id} message={message} />
+              ))}
+                         {isLoading && (
+               <div className="message assistant-message">
+                 <div className="max-w-4xl mx-auto">
+                   {/* Message Header */}
+                   <div className="flex items-center space-x-3 mb-2">
+                     <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                       TAAI Agent
+                     </span>
+                     <span className="text-xs text-text-secondary">
+                       {new Date().toLocaleTimeString('en-US', { 
+                         hour: '2-digit', 
+                         minute: '2-digit',
+                         hour12: true 
+                       })}
+                     </span>
+                   </div>
+                   
+                   {/* Message Bubble */}
+                   <div className="inline-block max-w-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 text-text-primary rounded-2xl rounded-bl-md shadow-lg border border-gray-200 dark:border-gray-600">
+                     <div className="px-6 py-4">
+                       <div className="flex items-center space-x-3 mb-2">
+                         <span className="text-sm text-text-secondary font-medium">TAAI Agent is thinking...</span>
+                       </div>
+                       <div className="text-sm text-text-secondary italic">
+                         {thinkingMessage}
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+             )}
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
-      
-      <div className="input-container">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-          <div className="relative group">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Write your technical analysis question..."
-              className="chat-input pr-12"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={!inputValue.trim() || isLoading}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white transition-all duration-300 hover:scale-110 disabled:scale-100 shadow-md hover:shadow-lg"
-            >
-              <ArrowUp className="w-4 h-4" />
-            </button>
-          </div>
-        </form>
-        
-        <div className="text-center text-xs text-text-secondary mt-2">
-          TAAI Agent - Not investment advice
+       
+      {/* Fixed Header and Input Section - Always visible */}
+      <div className="flex-shrink-0">
+        {/* TAAI Agent Header Above Input */}
+        <div className="text-center mb-6">
+          {messages.length === 1 && (
+            <>
+              <h1 className="text-4xl font-bold text-text-primary mb-2">
+                TAAI Agent
+              </h1>
+              <p className="text-2xl text-text-secondary mb-3">
+                (Technical Analysis AI Agent)
+              </p>
+              <p className="text-lg text-text-secondary leading-relaxed">
+                Hello! I am TAAI Agent, here to help you with technical analysis. What topic would you like to learn about?
+              </p>
+            </>
+          )}
         </div>
+        
+        <div className="input-container mb-8">
+         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+           <div className="relative group">
+             <input
+               type="text"
+               value={inputValue}
+               onChange={(e) => setInputValue(e.target.value)}
+               placeholder="Write your technical analysis question..."
+               className="chat-input pr-12"
+               disabled={isLoading}
+             />
+             <button
+               type="submit"
+               disabled={!inputValue.trim() || isLoading}
+               className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-lg bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 text-white transition-all duration-300 hover:scale-110 disabled:scale-100 shadow-md hover:shadow-lg"
+             >
+               <ArrowUp className="w-4 h-4" />
+             </button>
+           </div>
+         </form>
+
+                   {/* Provider Selection Toggle - Moved below the input */}
+          <div className="max-w-4xl mx-auto mt-2">
+           <div className="flex items-center justify-center space-x-2">
+             <span className="text-sm text-text-secondary font-medium">AI Provider:</span>
+             <div className="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                               <button
+                  type="button"
+                  onClick={() => setSelectedProvider('openai')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    selectedProvider === 'openai'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <img src="/gpt.png" alt="GPT" className="w-5 h-5 inline-block mr-2" />
+                  OpenAI
+                </button>
+                               <button
+                  type="button"
+                  disabled
+                  className="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-400 dark:text-gray-500 cursor-not-allowed opacity-60 relative group"
+                  title="Coming Soon - Sentient Framework will be available soon!"
+                >
+                  <img src="/sentient.png" alt="Sentient" className="w-5 h-5 inline-block mr-2" />
+                  Sentient
+                  {/* Coming Soon Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                    Coming Soon
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </button>
+             </div>
+           </div>
+           
+                   </div>
+
+                                           {/* Example Questions - Moved below AI Provider */}
+            {messages.length === 1 && (
+              <div className="max-w-4xl mx-auto mt-6">
+                <div className="text-center mb-4">
+                  <span className="text-sm text-text-secondary font-medium">💡 Example Questions:</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setInputValue("How is the RSI indicator used?")}
+                    className="example-card"
+                  >
+                    <div className="example-card-icon">📊</div>
+                    <div className="example-card-title">RSI Indicator</div>
+                    <div className="example-card-description">How to determine overbought/oversold levels?</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setInputValue("What are Fibonacci levels?")}
+                    className="example-card"
+                  >
+                    <div className="example-card-icon">📈</div>
+                    <div className="example-card-title">Fibonacci</div>
+                    <div className="example-card-description">How are retracement levels calculated?</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setInputValue("How is trend analysis performed?")}
+                    className="example-card"
+                  >
+                    <div className="example-card-icon">🎯</div>
+                    <div className="example-card-title">Trend Analysis</div>
+                    <div className="example-card-description">How do we identify uptrends and downtrends?</div>
+                  </button>
+                  
+                  <button
+                    onClick={() => setInputValue("Tell me about the MACD indicator")}
+                    className="example-card"
+                  >
+                    <div className="example-card-icon">⚡</div>
+                    <div className="example-card-title">MACD</div>
+                    <div className="example-card-description">How do we read momentum and trend changes?</div>
+                  </button>
+                </div>
+                
+                {/* Help text moved below example questions */}
+                <div className="text-center mt-4">
+                  <span className="text-xs text-text-secondary">
+                    💡 Click on example questions to get started immediately or write your own question
+                  </span>
+                </div>
+              </div>
+            )}
+          
+        </div>
+      </div>
+      
+      {/* Disclaimer - Always visible at bottom */}
+      <div className="flex-shrink-0 text-center text-xs text-text-secondary py-4 border-t border-border-color">
+        Information provided by TAAI Agent is for informational purposes only and does not constitute investment advice.
       </div>
     </div>
   )

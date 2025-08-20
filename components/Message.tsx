@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useUsername } from './UsernameContext'
 
 interface MessageProps {
   message: {
@@ -14,6 +15,7 @@ export default function Message({ message }: MessageProps) {
   const isUser = message.role === 'user'
   const [mounted, setMounted] = useState(false)
   const [formattedTime, setFormattedTime] = useState('--:--')
+  const { username } = useUsername()
   
   useEffect(() => {
     setMounted(true)
@@ -33,33 +35,40 @@ export default function Message({ message }: MessageProps) {
   }, [message.timestamp])
   
   return (
-    <div className={`message ${isUser ? 'user-message' : 'assistant-message'}`}>
-      <div className="max-w-4xl mx-auto flex items-start space-x-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          isUser 
-            ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg' 
-            : 'bg-gradient-to-br from-green-500 to-green-600 shadow-lg'
-        }`}>
-          {isUser ? (
-            // Modern User Logo
-            <div className="relative group">
-              <span className="text-white font-mono text-sm font-extrabold tracking-widest px-2 py-1 bg-gray-800 rounded-md">USER</span>
-              <div className="absolute -inset-1 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+    <div className={`message-container ${isUser ? 'user-container' : 'assistant-container'} mb-3`}>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-start">
+
+          {/* Message Content Section */}
+          <div className={`flex-1 ${isUser ? 'text-right' : 'text-left'}`}>
+            {/* Message Header */}
+            <div className={`flex items-center mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}>
+              <span className={`text-sm font-semibold ${
+                isUser 
+                  ? 'text-gray-700 dark:text-gray-300' 
+                  : 'text-green-600 dark:text-green-400'
+              }`}>
+                {isUser ? (username || 'You') : 'TAAI Agent'}
+              </span>
+              <span className="text-xs text-text-secondary ml-2">
+                {formattedTime}
+              </span>
             </div>
-          ) : (
-            // Modern TAAI Agent Logo
-            <div className="relative group">
-              <span className="text-white font-mono text-sm font-extrabold tracking-widest px-2 py-1 bg-gray-800 rounded-md">TAAI</span>
-              <div className="absolute -inset-1 bg-gradient-to-br from-green-400 to-green-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+
+            {/* Message Bubble */}
+            <div className={`inline-block max-w-full ${
+              isUser 
+                ? 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 text-text-primary rounded-2xl rounded-br-md shadow-lg border border-gray-200 dark:border-gray-600' 
+                : 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 text-text-primary rounded-2xl rounded-bl-md shadow-lg border border-gray-200 dark:border-gray-600'
+            }`}>
+              <div className="px-6 py-4">
+                <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {message.content}
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-        <div className="flex-1">
-          <div className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </div>
-          <div className="text-xs text-text-secondary mt-2">
-            {formattedTime}
+
+
           </div>
         </div>
       </div>

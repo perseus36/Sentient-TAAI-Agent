@@ -46,16 +46,19 @@ export async function POST(request: NextRequest) {
 RESPONSE RULES:
 1. Provide information only on technical analysis topics
 2. Do not give investment advice, only provide educational information
-3. Detect the language of the user's question and respond in the same language
-4. Provide detailed explanations on technical indicators, chart patterns, trend analysis, etc.
-5. Include risk management warnings
-6. Explain complex topics in simple and understandable terms
-7. Provide examples and practical information
-8. Always add the disclaimer "This is not investment advice"
-9. Keep responses concise but informative (max 2-3 paragraphs)
-10. Use bullet points for key concepts when appropriate
+3. CRITICAL: You MUST respond in the EXACT same language as the user's question
+4. If user asks in English, respond ONLY in English
+5. If user asks in Turkish, respond ONLY in Turkish
+6. If user asks in any other language, respond in that language
+7. Provide detailed explanations on technical indicators, chart patterns, trend analysis, etc.
+8. Include risk management warnings
+9. Explain complex topics in simple and understandable terms
+10. Provide examples and practical information
+11. Always add the disclaimer "This is not investment advice"
+12. Keep responses concise but informative (max 2-3 paragraphs)
+13. Use bullet points for key concepts when appropriate
 
-Respond to the user's question within this framework in the same language they used.`
+LANGUAGE ENFORCEMENT: The user asked: "${message}". Detect the language and respond in EXACTLY the same language.`
     }
 
     // Prepare chat history - limit to last 5 messages for faster processing
@@ -80,8 +83,50 @@ Respond to the user's question within this framework in the same language they u
 
     const openaiResponse = completion.choices[0]?.message?.content || 'Sorry, could not generate a response.'
 
-    // If it's a crypto question, add the special message
+    // Language enforcement - ensure response is in the same language as the question
     let finalResponse = openaiResponse
+    
+    // Detect user's language from the question
+    const isEnglish = /^[a-zA-Z\s\?\.\,\!\-\'\"]+$/.test(message.trim())
+    const isTurkish = /[çğıöşüÇĞIÖŞÜ]/.test(message) || 
+                     message.toLowerCase().includes('nasıl') || 
+                     message.toLowerCase().includes('nedir') ||
+                     message.toLowerCase().includes('hakkında')
+    
+    // Check if response is in wrong language and fix it
+    if (isEnglish && !/^[a-zA-Z\s\?\.\,\!\-\'\"]+$/.test(openaiResponse.trim())) {
+      // Force English response
+      const englishSystemMessage = {
+        role: 'system' as const,
+        content: `You are TAAI Agent. The user asked in English: "${message}". You MUST respond ONLY in English. Rewrite this response in English: ${openaiResponse}`
+      }
+      
+      const englishCompletion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [englishSystemMessage],
+        max_tokens: 600,
+        temperature: 0.3,
+      })
+      
+      finalResponse = englishCompletion.choices[0]?.message?.content || openaiResponse
+    } else if (isTurkish && !/[çğıöşüÇĞIÖŞÜ]/.test(openaiResponse)) {
+      // Force Turkish response
+      const turkishSystemMessage = {
+        role: 'system' as const,
+        content: `Sen TAAI Agent'sın. Kullanıcı Türkçe sordu: "${message}". Sadece Türkçe cevap ver. Bu cevabı Türkçe'ye çevir: ${openaiResponse}`
+      }
+      
+      const turkishCompletion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [turkishSystemMessage],
+        max_tokens: 600,
+        temperature: 0.3,
+      })
+      
+      finalResponse = turkishCompletion.choices[0]?.message?.content || openaiResponse
+    }
+
+    // If it's a crypto question, add the special message
     
     if (isCryptoQuestion) {
       // Detect language and provide appropriate message
